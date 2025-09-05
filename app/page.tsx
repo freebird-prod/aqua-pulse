@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,11 +24,11 @@ import {
   Globe,
   Shield,
   TrendingUp,
-  Map,
   Upload,
-  Image,
   Camera,
+  Image as ImageIcon,
 } from "lucide-react";
+import Image from "next/image";
 
 interface FloodRiskData {
   riskLevel: "Low" | "Medium" | "High" | "Very High";
@@ -50,20 +50,27 @@ export default function FloodDetectionSystem() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const API_BASE_URL = "https://aqua-pulse-backend.onrender.com";
 
   // API calls
-  const callAPI = async (endpoint: string, data: any) => {
+  const callAPI = async (
+    endpoint: string,
+    data: Record<string, unknown> | FormData
+  ) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
-      headers: endpoint.includes("coordinates")
-        ? { "Content-Type": "application/json" }
-        : {},
-      body: endpoint.includes("coordinates") ? JSON.stringify(data) : data,
+      headers:
+        endpoint.includes("coordinates")
+          ? { "Content-Type": "application/json" }
+          : undefined,
+      body:
+        endpoint.includes("coordinates") && !(data instanceof FormData)
+          ? JSON.stringify(data)
+          : (data as BodyInit),
     });
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     return response.json();
@@ -135,7 +142,8 @@ export default function FloodDetectionSystem() {
       }
       setSelectedImage(file);
       const reader = new FileReader();
-      reader.onload = (e) => setImagePreview(e.target?.result as string);
+      reader.onload = (e) =>
+        setImagePreview((e.target?.result as string) || null);
       reader.readAsDataURL(file);
     }
   };
@@ -236,7 +244,7 @@ export default function FloodDetectionSystem() {
                     value="image"
                     className="flex items-center gap-2"
                   >
-                    <Image className="h-4 w-4" />
+                    <ImageIcon className="h-4 w-4" />
                     Image Analysis
                   </TabsTrigger>
                 </TabsList>
@@ -318,10 +326,12 @@ export default function FloodDetectionSystem() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          <img
+                          <Image
                             src={imagePreview}
                             alt="Preview"
-                            className="max-h-48 mx-auto rounded-lg shadow-sm"
+                            width={300}
+                            height={200}
+                            className="max-h-48 mx-auto rounded-lg shadow-sm object-contain"
                           />
                           <div className="flex gap-2 justify-center">
                             <Button
@@ -335,7 +345,7 @@ export default function FloodDetectionSystem() {
                             <Button
                               onClick={() => {
                                 setSelectedImage(null);
-                                setImagePreview("");
+                                setImagePreview(null);
                               }}
                               variant="outline"
                               size="sm"
@@ -359,7 +369,7 @@ export default function FloodDetectionSystem() {
                         </>
                       ) : (
                         <>
-                          <Image className="mr-2 h-4 w-4" />
+                          <ImageIcon className="mr-2 h-4 w-4" />
                           Analyze Image
                         </>
                       )}
@@ -468,7 +478,6 @@ export default function FloodDetectionSystem() {
             </CardContent>
           </Card>
         </div>
-
       </div>
 
       {/* Alert Dialog */}
