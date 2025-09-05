@@ -54,7 +54,7 @@ export default function FloodDetectionSystem() {
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const API_BASE_URL = "http://localhost:8001";
+  const API_BASE_URL = "https://aqua-pulse-backend.onrender.com";
 
   // API calls
   const callAPI = async (endpoint: string, data: any) => {
